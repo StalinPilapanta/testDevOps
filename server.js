@@ -1,7 +1,6 @@
 const express = require('express')
 const app = express()
 const port = 3001
-const initDB = require('./app/config/db')
 
 const jwt = require('jsonwebtoken')
 
@@ -9,11 +8,19 @@ const jwt = require('jsonwebtoken')
 const userRouters = require('./app/routes/user')
 const devopsRouters = require('./app/routes/devops')
 
+app.use(express.json())
+app.use(express.urlencoded({extended: false}))
+
 app.use(userRouters)
 app.use(devopsRouters)
 
-app.post("/bachis", (req,res) => {
-   console.log(req.body)
+app.post("/test", (req,res) => {
+   console.log(req.body.to)
+
+   res.json({
+    message : `Hello ${req.body.to} your message will be send`
+   })
+   
 
 })
 
