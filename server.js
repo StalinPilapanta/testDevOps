@@ -1,25 +1,21 @@
 const express = require('express')
+
+// server
 const app = express()
 const port = 3001
 
+// component
 const jwt = require('jsonwebtoken')
-
-
 const userRouters = require('./app/routes/user')
-const devopsRouters = require('./app/routes/devops')
 
+// urlencoded
 app.use(express.json())
 app.use(express.urlencoded({extended: false}))
 
 app.use(userRouters)
-app.use(devopsRouters)
 
-app.post("/prueba", (req,res) => {
-   res.json({
-    message : `Hello ${req.body.to} your message will be send`
-   })
-})
 
+// validation jwt
 app.post("/DevOps", verifyToken, (req, res) =>{
     
     jwt.verify(req.token, 'secretkey', (error, authData)=> {
@@ -29,7 +25,6 @@ app.post("/DevOps", verifyToken, (req, res) =>{
             res.json(
                 {
                     message : `Hello ${req.body.to} your message will be send`
-                    
                 }
             )
         }
