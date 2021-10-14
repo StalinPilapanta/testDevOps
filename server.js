@@ -14,17 +14,13 @@ app.use(express.urlencoded({extended: false}))
 app.use(userRouters)
 app.use(devopsRouters)
 
-app.post("/test", (req,res) => {
-   console.log(req.body.to)
-
+app.post("/prueba", (req,res) => {
    res.json({
     message : `Hello ${req.body.to} your message will be send`
    })
-   
-
 })
 
-app.post("/posts", verifyToken, (req, res) =>{
+app.post("/DevOps", verifyToken, (req, res) =>{
     
     jwt.verify(req.token, 'secretkey', (error, authData)=> {
         if(error){
@@ -32,15 +28,13 @@ app.post("/posts", verifyToken, (req, res) =>{
         }else{
             res.json(
                 {
-                    message:  "post fue creado",
-                    authData
+                    message : `Hello ${req.body.to} your message will be send`
+                    
                 }
             )
         }
     })
-    res.json({
-        message: "Hola Peter fue creado"
-    })
+    
 })
 
 // Authorization: Bearer <tiken>
@@ -59,5 +53,3 @@ function verifyToken(req, res, next){
 app.listen(port,()=>{
     console.log("La consola esta en linea")
 })
-
-//initDB()

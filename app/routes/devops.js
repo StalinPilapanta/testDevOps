@@ -3,7 +3,7 @@ const express = require('express')
 const controller = require('../controllers/devops')
 const router = express.Router()
 
-const path = 'DevOps'
+const path = 'test'
 
 router.post(
     `/${path}`,
