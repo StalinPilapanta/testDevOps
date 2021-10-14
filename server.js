@@ -12,6 +12,10 @@ const devopsRouters = require('./app/routes/devops')
 app.use(userRouters)
 app.use(devopsRouters)
 
+app.post("/bachis", (req,res) => {
+   console.log(req.body)
+
+})
 
 app.post("/posts", verifyToken, (req, res) =>{
     
