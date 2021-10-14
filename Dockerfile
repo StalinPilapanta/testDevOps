@@ -1,19 +1,21 @@
-FROM node:14
+FROM node
 
-RUN mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
+RUN mkdir -p /home/node/app/node_modules
+
+RUN  chown -R node:node /home/node/app
 
 WORKDIR /home/node/app
 
-COPY package*.json ./
-
-RUN npm install
-
-COPY . .
-
-COPY --chown=node:node . .
+COPY package.json /home/node/app
+COPY server.js /home/node/app
 
 USER node
 
+
+RUN npm install
+
+COPY --chown=node:node . .
+
 EXPOSE 3001
 
-CMD [ "npm", "start" ]
+CMD node server.js
