@@ -23,8 +23,34 @@ variables:
 
 
 stages:
+
+- stage: Test
+  displayName: Test API
+  jobs:
+    - job: Test
+      displayName: Test
+      pool:
+        vmImage: $(vmImageName)
+      steps:
+        - task: NodeTool@0
+          inputs:
+            versionSpec: '14.x'
+          displayName: 'Install Node.js'
+        
+        - script: |
+            npm install
+            npm run build
+            npm test
+          displayName: 'npm install and build test'
+
+        - task: PublishTestResults@2
+          inputs:
+            testResultsFormat: 'JUnit'
+            testResultsFiles: '**/TEST-*.xml'
+
 - stage: Build
   displayName: Build stage
+  dependsOn: Test
   jobs:
   - job: Build
     displayName: Build
@@ -44,27 +70,12 @@ stages:
     - upload: manifests
       artifact: manifests
 
-- stage: Test
-  displayName: Test API
-  jobs:
-    - job: Test
-      displayName: Test
-      pool:
-        vmImage: $(vmImageName)
-      steps:
-        - task: Bash@3
-          inputs:
-            filePath: '$(System.DefaultWorkingDirectory)'
-            arguments: 'npm test'
-        - task: PublishTestResults@2
-          inputs:
-            testResultsFormat: 'JUnit'
-            testResultsFiles: '**/TEST-*.xml'
+
 
 
 - stage: Deploy
   displayName: Deploy stage
-  dependsOn: Test
+  dependsOn: Build
 
   jobs:
   - deployment: Deploy
