@@ -48,6 +48,16 @@ stages:
             testResultsFormat: 'JUnit'
             testResultsFiles: '**/TEST-*.xml'
 
+        - task: SonarCloudPrepare@1
+          inputs:
+            SonarCloud: 'sonarcloudpilapantastalin'
+            organization: 'pilapantastalinsonarcloud'
+            scannerMode: 'CLI'
+            configMode: 'manual'
+            cliProjectKey: 'Pilapantastalin_TestDevOps'
+            cliProjectName: 'TestDevOps'
+            cliSources: '.'
+
 - stage: Build
   displayName: Build stage
   
