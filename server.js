@@ -17,7 +17,6 @@ app.use(userRouters)
 
 
 
-
 // validation jwt
 app.post("/DevOps", verifyToken, (req, res) =>{
     
@@ -34,6 +33,7 @@ app.post("/DevOps", verifyToken, (req, res) =>{
     })
     
 })
+
 
 // Authorization: Bearer <token>
 function verifyToken(req, res, next){
@@ -54,4 +54,4 @@ app.listen(port,()=>{
     console.log("La consola esta en linea")
 })
 
-module.exports = app
+module.exports = { app:app, verifyToken: verifyToken }
