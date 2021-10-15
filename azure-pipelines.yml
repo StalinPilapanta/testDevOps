@@ -44,6 +44,20 @@ stages:
     - upload: manifests
       artifact: manifests
 
+- stage: Test
+  displayName: Test API
+  jobs:
+    - job: Test
+      displayName: Test
+      pool:
+        vmImage: $(vmImageName)
+      steps:
+        - task: PublishTestResults@2
+          inputs:
+            testResultsFormat: 'JUnit'
+            testResultsFiles: '**/TEST-*.xml'
+
+
 - stage: Deploy
   displayName: Deploy stage
   dependsOn: Build
