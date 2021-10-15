@@ -17,6 +17,7 @@ variables:
   dockerfilePath: '**/Dockerfile'
   tag: '$(Build.BuildId)'
   imagePullSecret: 'registrytestdevops95e9-auth'
+  isMasterBranch : $[eq(variables['Build.SourceBranch'], 'refs/heads/master')]
 
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
@@ -98,7 +99,7 @@ stages:
   displayName: "Deploy to A8S"
   dependsOn:
     - Build
-  condition: and(succeeded('Build'), $[eq(variables['Build.SourceBranch'], 'refs/heads/master')], true))
+  condition: and(succeeded('Build'), eq(), true))
   pool:
     vmImage: "ubuntu-latest"
   jobs:
