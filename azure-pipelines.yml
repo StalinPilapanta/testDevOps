@@ -58,9 +58,17 @@ stages:
             cliProjectName: 'TestDevOps'
             cliSources: '.'
         - task: SonarCloudAnalyze@1
+
+        - task: PublishCodeCoverageResults@1
+          inputs:
+            codeCoverageTool: 'Cobertura'
+            summaryFileLocation: '$(Build.SourcesDirectory)/coverage/coverage.xml'
+            pathToSources: '$(System.DefaultWorkingDirectory)'
+            reportDirectory: '$(Build.SourcesDirectory)/coverage/'
         - task: SonarCloudPublish@1
           inputs:
             pollingTimeoutSec: '300'
+        
 
 - stage: Build
   displayName: Build stage
@@ -86,11 +94,26 @@ stages:
       artifact: manifests
 
 
+- stage: ApproveDeploy
+  displayName: "Deploy to A8S"
+  dependsOn:
+    - Build
+  condition: and(succeeded('Build'), $[eq(variables['Build.SourceBranch'], 'refs/heads/master')], true))
+  pool:
+    vmImage: "ubuntu-latest"
+  jobs:
+    - deployment: A8S
+      environment: test-devops
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+              - script: echo "Approval Complete"
 
 
 - stage: Deploy
   displayName: Deploy stage
-  dependsOn: Build
+  dependsOn: ApproveDeploy
 
   jobs:
   - deployment: Deploy
