@@ -99,7 +99,7 @@ stages:
   displayName: "Deploy to A8S"
   dependsOn:
     - Build
-  condition: and(succeeded('Build'), eq(), true))
+  condition: and(succeeded('Build'), eq(variables.isMasterBranch, true))
   pool:
     vmImage: "ubuntu-latest"
   jobs:
