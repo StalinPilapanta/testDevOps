@@ -48,3 +48,5 @@ function verifyToken(req, res, next){
 app.listen(port,()=>{
     console.log("La consola esta en linea")
 })
+
+module.exports = app
