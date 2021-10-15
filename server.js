@@ -15,6 +15,9 @@ app.use(express.urlencoded({extended: false}))
 app.use(userRouters)
 
 
+
+
+
 // validation jwt
 app.post("/DevOps", verifyToken, (req, res) =>{
     
@@ -32,12 +35,14 @@ app.post("/DevOps", verifyToken, (req, res) =>{
     
 })
 
-// Authorization: Bearer <tiken>
+// Authorization: Bearer <token>
 function verifyToken(req, res, next){
-    const bearerHeader = req.headers['authorization'];
-
+    
+    const bearerHeader = req.headers['x-jwt-kwy'];
+    
     if(typeof bearerHeader !== 'undefined'){
-        const bearertoken = bearerHeader.split(" ")[1]
+        //const bearertoken = bearerHeader.split(" ")[1]
+        const bearertoken = bearerHeader
         req.token = bearertoken;
         next()
     }else{
