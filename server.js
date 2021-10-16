@@ -34,7 +34,6 @@ app.post("/DevOps", verifyToken, (req, res) =>{
     
 })
 
-
 // Authorization: Bearer <token>
 function verifyToken(req, res, next){
     

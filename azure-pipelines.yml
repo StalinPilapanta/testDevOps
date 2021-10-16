@@ -4,6 +4,7 @@
 
 trigger:
 - master
+- test
 
 resources:
 - repo: self
@@ -17,6 +18,7 @@ variables:
   dockerfilePath: '**/Dockerfile'
   tag: '$(Build.BuildId)'
   imagePullSecret: 'registrytestdevops95e9-auth'
+  isTestBranch : $[eq(variables['Build.SourceBranch'], 'refs/heads/test')]
   isMasterBranch : $[eq(variables['Build.SourceBranch'], 'refs/heads/master')]
 
   # Agent VM image name
@@ -26,10 +28,10 @@ variables:
 stages:
 
 - stage: Test
-  displayName: Test API
+  displayName: "Static Analysis&Test"
   jobs:
     - job: Test
-      displayName: Test
+      displayName: Analysis&Test
       pool:
         vmImage: $(vmImageName)
       steps:
@@ -41,7 +43,7 @@ stages:
         - script: |
             npm install
             npm run build
-            npm test
+            npm run test:coverage
           displayName: 'npm install and build test'
 
         - task: PublishTestResults@2
@@ -72,7 +74,7 @@ stages:
         
 
 - stage: Build
-  displayName: Build stage
+  displayName: Build
   
 
   jobs:
@@ -96,14 +98,14 @@ stages:
 
 
 - stage: ApproveDeploy
-  displayName: "Deploy to A8S"
+  displayName: "PO Approval Deploy to A8S"
   dependsOn:
     - Build
   condition: and(succeeded('Build'), eq(variables.isMasterBranch, true))
   pool:
     vmImage: "ubuntu-latest"
   jobs:
-    - deployment: A8S
+    - deployment: A8S-TEST
       environment: test-devops
       strategy:
         runOnce:
@@ -111,10 +113,27 @@ stages:
             steps:
               - script: echo "Approval Complete"
 
+- stage: 
+  displayName: Deploy in ENV TEST
+  dependsOn:
+    - Build
+  condition: and(succeeded('Build'), eq(variables.isTestBranch, true))
+  pool:
+    vmImage: "ubuntu-latest"
+  jobs:
+    - deployment: A8S-TEST
+      environment: test-devops
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+              - script: echo "Deploy in ENV TEST"
+              
 
 - stage: Deploy
-  displayName: Deploy stage
+  displayName: Deploy in ENV PROD
   dependsOn: ApproveDeploy
+  condition: and(succeeded('Build'), eq(variables.isMasterBranch, true))
 
   jobs:
   - deployment: Deploy
