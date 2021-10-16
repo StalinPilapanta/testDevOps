@@ -105,7 +105,7 @@ stages:
   pool:
     vmImage: "ubuntu-latest"
   jobs:
-    - deployment: A8S TEST
+    - deployment: A8S
       environment: test-devops
       strategy:
         runOnce:
@@ -121,7 +121,7 @@ stages:
   pool:
     vmImage: "ubuntu-latest"
   jobs:
-    - deployment: A8S TEST
+    - deployment: A8S
       environment: test-devops
       strategy:
         runOnce:
