@@ -1,0 +1,21 @@
+git config --global user.name "Cristian Stalin"
+git config --global user.email "cristian.stalin@globant.com"
+
+
+AKS_ID=$(az aks show --resource-group rg-devops-microservicio --name devops-aks-cluster --query identityProfile.kubeletidentity.clientId --output tsv)
+
+ACR_ID=$(az acr show --name acrmicroservicio952024 --query id --output tsv)
+az role assignment create --assignee $AKS_ID --role AcrPull --scope $ACR_ID
+
+
+curl -X POST \
+  -H "X-Parse-REST-API-Key: 2f5ae96c-b558-4c7b-a590-a501ae1c3f6c" \
+  -H "Content-Type: application/json" \
+  -d '{ "message": "This is a test", "to": "Jonnathan Calderon", "from": "Rita Asturia", "timeToLifeSec": 45 }' \
+  http://localhost:3000/DevOps -i
+
+curl -X POST \
+  -H "X-Parse-REST-API-Key: 2f5ae96c-b558-4c7b-a590-a501ae1c3f6c" \
+  -H "Content-Type: application/json" \
+  -d '{ "message": "This is a test", "to": "Jonnathan Calderon", "from": "Rita Asturia", "timeToLifeSec": 45 }' \
+  http://4.156.148.161:3000/DevOps -i

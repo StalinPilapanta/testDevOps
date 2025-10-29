@@ -1,0 +1,76 @@
+trigger:
+- main
+
+variables:
+  # Configuración de tu ACR
+  azureContainerRegistry: 'acrmicroservicio952024.azurecr.io'
+  imageRepository: 'microservicio-devops'
+  dockerfilePath: '$(Build.SourcesDirectory)/app/Dockerfile'
+  tag: '$(Build.BuildId)'
+  azureServiceConnectionACR: 'acr-connection'
+
+  # Configuración de tu AKS
+  azureServiceConnectionAKS: 'aks-connection'
+  resourceGroupName: 'rg-devops-microservicio'
+  kubernetesCluster: 'devops-aks-cluster'
+  k8sNamespace: 'default'
+
+stages:
+- stage: Build
+  displayName: 'Build and Push Image to ACR'
+  jobs:
+  - job: DockerBuildAndPush
+    displayName: 'Docker Build and Push'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: Docker@2
+      displayName: 'Build and Push image to ACR'
+      inputs:
+        containerRegistry: '$(azureServiceConnectionACR)'
+        repository: '$(imageRepository)'
+        command: 'buildAndPush'
+        Dockerfile: '$(dockerfilePath)'
+        tags: |
+          $(tag)
+          latest
+    
+    - publish: '$(Build.SourcesDirectory)/manifests'
+      artifact: manifests
+
+- stage: Deploy
+  displayName: 'Deploy to AKS'
+  dependsOn: Build
+  jobs:
+  - deployment: DeployToAKS
+    displayName: 'Kubernetes Deployment'
+    environment: 'prod'
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: manifests
+
+          - task: Kubernetes@1
+            displayName: 'kubectl get context (Connect to AKS)'
+            inputs:
+              connectionType: 'Kubernetes Service Connection'
+              kubernetesServiceEndpoint: 'aks-connection'
+              command: 'get'
+              arguments: 'nodes'
+
+          - task: KubernetesManifest@1
+            displayName: 'Deploy to Kubernetes'
+            inputs:
+              action: 'deploy'
+              kubernetesServiceEndpoint: 'aks-connection'
+              namespace: '$(k8sNamespace)'
+              manifests: |
+                $(Pipeline.Workspace)/manifests/deployment.yaml
+                $(Pipeline.Workspace)/manifests/service.yaml
+              containers: |
+                $(azureContainerRegistry)/$(imageRepository):latest
