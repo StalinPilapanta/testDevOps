@@ -1,0 +1,19 @@
+apiVersion : apps/v1
+kind: Deployment
+metadata:
+  name: testdevops 
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: testdevops
+  template:
+    metadata:
+      labels:
+        app: testdevops 
+    spec:
+      containers:
+        - name: testdevops 
+          image: registrytestdevops.azurecr.io/testdevops
+          ports:
+          - containerPort: 3001

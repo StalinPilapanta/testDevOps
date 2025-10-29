@@ -1,0 +1,23 @@
+{
+  "name": "apirestnode",
+  "version": "1.0.0",
+  "description": "Test Everis",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon server.js",
+    "test": "jest --forceExit",
+    "test:coverage": "jest --coverage --forceExit"
+  },
+  "author": "Stalin Pilapanta",
+  "license": "ISC",
+  "dependencies": {
+    "coverage": "^0.4.1",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "supertest": "^6.1.6"
+  },
+  "devDependencies": {
+    "jest": "^27.2.5",
+    "nodemon": "^2.0.13"
+  }
+}

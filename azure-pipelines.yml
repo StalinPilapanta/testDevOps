@@ -1,0 +1,166 @@
+# Deploy to Azure Kubernetes Service
+# Build and push image to Azure Container Registry; Deploy to Azure Kubernetes Service
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+- master
+- test
+
+resources:
+- repo: self
+
+variables:
+
+  # Container registry service connection established during pipeline creation
+  dockerRegistryServiceConnection: '8c76df70-c62e-4209-837d-0ba4c5669f85'
+  imageRepository: 'testdevops'
+  containerRegistry: 'registrytestdevops.azurecr.io'
+  dockerfilePath: '**/Dockerfile'
+  tag: '$(Build.BuildId)'
+  imagePullSecret: 'registrytestdevops95e9-auth'
+  isTestBranch : $[eq(variables['Build.SourceBranch'], 'refs/heads/test')]
+  isMasterBranch : $[eq(variables['Build.SourceBranch'], 'refs/heads/master')]
+
+  # Agent VM image name
+  vmImageName: 'ubuntu-latest'
+
+
+stages:
+
+- stage: Test
+  displayName: "Static Analysis&Test"
+  jobs:
+    - job: Test
+      displayName: Analysis&Test
+      pool:
+        vmImage: $(vmImageName)
+      steps:
+        - task: NodeTool@0
+          inputs:
+            versionSpec: '14.x'
+          displayName: 'Install Node.js'
+        
+        - script: |
+            npm install
+            npm run build
+            npm run test:coverage
+          displayName: 'npm install and build test'
+
+        - task: PublishTestResults@2
+          inputs:
+            testResultsFormat: 'JUnit'
+            testResultsFiles: '**/TEST-*.xml'
+
+        - task: SonarCloudPrepare@1
+          inputs:
+            SonarCloud: 'sonarcloudpilapantastalin'
+            organization: 'pilapantastalinsonarcloud'
+            scannerMode: 'CLI'
+            configMode: 'manual'
+            cliProjectKey: 'Pilapantastalin_TestDevOps'
+            cliProjectName: 'TestDevOps'
+            cliSources: '.'
+        - task: SonarCloudAnalyze@1
+
+        - task: PublishCodeCoverageResults@1
+          inputs:
+            codeCoverageTool: 'Cobertura'
+            summaryFileLocation: '$(System.DefaultWorkingDirectory)/coverage/coverage.xml'
+            pathToSources: '$(System.DefaultWorkingDirectory)'
+            reportDirectory: '$(Build.SourcesDirectory)/coverage/'
+        - task: SonarCloudPublish@1
+          inputs:
+            pollingTimeoutSec: '300'
+        
+
+- stage: Build
+  displayName: Build
+  
+
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        command: buildAndPush
+        repository: $(imageRepository)
+        dockerfile: $(dockerfilePath)
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(tag)
+
+    - upload: manifests
+      artifact: manifests
+
+
+- stage: ApproveDeploy
+  displayName: "PO Approval Deploy to A8S"
+  dependsOn:
+    - Build
+  condition: and(succeeded('Build'), eq(variables.isMasterBranch, true))
+  pool:
+    vmImage: "ubuntu-latest"
+  jobs:
+    - deployment: A8S
+      environment: test-devops
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+              - script: echo "Approval Complete"
+
+- stage: 
+  displayName: Deploy in ENV TEST
+  dependsOn:
+    - Build
+  condition: and(succeeded('Build'), eq(variables.isTestBranch, true))
+  pool:
+    vmImage: "ubuntu-latest"
+  jobs:
+    - deployment: A8S
+      environment: test-devops
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+              - script: echo "Deploy in ENV TEST"
+              
+
+- stage: Deploy
+  displayName: Deploy in ENV PROD
+  dependsOn: ApproveDeploy
+  condition: and(succeeded('Build'), eq(variables.isMasterBranch, true))
+
+  jobs:
+  - deployment: Deploy
+    displayName: Deploy
+    pool:
+      vmImage: $(vmImageName)
+    environment: 'TestDevOps.test-devops'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: KubernetesManifest@0
+            displayName: Create imagePullSecret
+            inputs:
+              action: createSecret
+              secretName: $(imagePullSecret)
+              dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
+
+          - task: KubernetesManifest@0
+            displayName: Deploy to Kubernetes cluster
+            inputs:
+              action: deploy
+              manifests: |
+                $(Pipeline.Workspace)/manifests/deployment.yml
+                $(Pipeline.Workspace)/manifests/service.yml
+              imagePullSecrets: |
+                $(imagePullSecret)
+              containers: |
+                $(containerRegistry)/$(imageRepository):$(tag)
+
